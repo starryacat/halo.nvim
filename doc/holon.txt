@@ -47,7 +47,6 @@ Requirements: ~
 ==============================================================================
 2. SETUP                                                *holon-setup*
 
-                                                        *holon.setup()*
 Setup with `require("holon").setup()`: >lua
 
   require("holon").setup({
