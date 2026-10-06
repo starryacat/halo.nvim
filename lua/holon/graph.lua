@@ -16,15 +16,17 @@ local M = {}
 function M.build(files)
   local graph = {
     nodes = {},     -- [node_id] = filepath
-    index = {},     -- [filepath] = node_id, [uuid] = node_id
+    index = {},     -- [filepath] = node_id, [file stem] = node_id
     outgoing = {},  -- [node_id] = { target_id, ... }
     incoming = {},  -- [node_id] = { source_id, ... }
   }
 
-  -- Phase 1: assign sequential IDs and build UUID index
+  -- Phase 1: assign graph node IDs and index file stems
   for i, filepath in ipairs(files) do
     graph.nodes[i] = filepath
-    graph.index[filepath] = i
+    graph.index[vim.fs.normalize(filepath)] = i
+    local identifier = vim.fn.fnamemodify(filepath, ":t:r")
+    graph.index[identifier] = i
     local uuid = utils.extract_uuid_from_path(filepath)
     if uuid then
       graph.index[uuid] = i
@@ -37,16 +39,13 @@ function M.build(files)
     if content then
       local out_links = links.extract_all_links(content)
       for _, link in ipairs(out_links) do
-        local target = link.uuid
-        if target then
-          target = target:gsub("%.md$", "")
-          local j = graph.index[target]
-          if j and j ~= i then
-            graph.outgoing[i] = graph.outgoing[i] or {}
-            table.insert(graph.outgoing[i], j)
-            graph.incoming[j] = graph.incoming[j] or {}
-            table.insert(graph.incoming[j], i)
-          end
+        local target = links.resolve_link_target(link.uuid, filepath, files)
+        local j = target and graph.index[target]
+        if j and j ~= i then
+          graph.outgoing[i] = graph.outgoing[i] or {}
+          table.insert(graph.outgoing[i], j)
+          graph.incoming[j] = graph.incoming[j] or {}
+          table.insert(graph.incoming[j], i)
         end
       end
     end

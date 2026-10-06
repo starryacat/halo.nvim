@@ -1,8 +1,8 @@
 -- =============================================================================
--- holon.nvim: Plugin initialization
+-- Halo.nvim: Plugin initialization
 -- =============================================================================
 -- This file is automatically loaded by Neovim.
--- It sets up user commands for the holon.nvim plugin.
+-- It sets up Halo commands and compatibility aliases.
 -- =============================================================================
 
 if vim.g.loaded_holon then
@@ -11,62 +11,67 @@ end
 vim.g.loaded_holon = true
 
 -- User commands
-vim.api.nvim_create_user_command("Holon", function(opts)
+local function create_command(name, callback, opts)
+  vim.api.nvim_create_user_command(name, callback, opts)
+  vim.api.nvim_create_user_command(name:gsub("^Halo", "Holon"), callback, opts)
+end
+
+create_command("Halo", function(opts)
   require("holon.zk.pickers").notes()
-end, { desc = "Open Holon notes picker" })
+end, { desc = "Open Halo notes picker" })
 
-vim.api.nvim_create_user_command("HolonNew", function(opts)
+create_command("HaloNew", function(opts)
   require("holon.zk.pickers").templates()
-end, { desc = "Create new Holon note" })
+end, { desc = "Create new Halo note" })
 
-vim.api.nvim_create_user_command("HolonGrep", function(opts)
+create_command("HaloGrep", function(opts)
   require("holon.zk.pickers").grep_notes({ default_text = opts.args })
-end, { nargs = "?", desc = "Grep Holon notes" })
+end, { nargs = "?", desc = "Grep Halo notes" })
 
-vim.api.nvim_create_user_command("HolonBacklinks", function(opts)
+create_command("HaloBacklinks", function(opts)
   require("holon.zk.pickers").backlinks()
 end, { desc = "Show backlinks to current note" })
 
-vim.api.nvim_create_user_command("HolonLinks", function(opts)
+create_command("HaloLinks", function(opts)
   require("holon.zk.pickers").forward_links()
 end, { desc = "Show forward links from current note" })
 
-vim.api.nvim_create_user_command("HolonIndexes", function(opts)
+create_command("HaloIndexes", function(opts)
   require("holon.zk.pickers").indexes()
 end, { desc = "Browse index notes" })
 
-vim.api.nvim_create_user_command("HolonJournal", function(opts)
+create_command("HaloJournal", function(opts)
   require("holon.zk.pickers").journal()
 end, { desc = "Open journal picker" })
 
-vim.api.nvim_create_user_command("HolonTags", function(opts)
+create_command("HaloTags", function(opts)
   require("holon.zk.pickers").filter_tags()
 end, { desc = "Filter notes by tags" })
 
-vim.api.nvim_create_user_command("HolonTypes", function(opts)
+create_command("HaloTypes", function(opts)
   require("holon.zk.pickers").filter_type()
 end, { desc = "Filter notes by type" })
 
-vim.api.nvim_create_user_command("HolonOrphans", function(opts)
+create_command("HaloOrphans", function(opts)
   require("holon.zk.pickers").orphans()
 end, { desc = "Find orphan notes with no links" })
 
-vim.api.nvim_create_user_command("HolonFollow", function(opts)
+create_command("HaloFollow", function(opts)
   require("holon.zk.actions").follow_link_under_cursor()
 end, { desc = "Follow link under cursor" })
 
-vim.api.nvim_create_user_command("HolonToday", function(opts)
+create_command("HaloToday", function(opts)
   local filepath = require("holon.zk.actions").create_journal_entry()
   if filepath then
     vim.cmd("edit " .. vim.fn.fnameescape(filepath))
   end
 end, { desc = "Open or create today's journal entry" })
 
-vim.api.nvim_create_user_command("HolonGtd", function(opts)
+create_command("HaloGtd", function(opts)
   require("holon.gtd.board").open()
 end, { desc = "Open GTD board" })
 
-vim.api.nvim_create_user_command("HolonBrowse", function(opts)
+create_command("HaloBrowse", function(opts)
   require("holon.zk.link_browser").open()
 end, { desc = "Open link browser" })
 
@@ -86,7 +91,7 @@ local function setup_gd_mapping(bufnr)
 
   vim.keymap.set("n", "gd", function()
     require("holon.zk.actions").smart_gd()
-  end, { buffer = bufnr, desc = "Holon: Go to definition / Follow link" })
+  end, { buffer = bufnr, desc = "Halo: Go to definition / Follow link" })
 end
 
 vim.api.nvim_create_autocmd("FileType", {

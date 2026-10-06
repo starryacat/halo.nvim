@@ -23,19 +23,19 @@ CONTENTS                                                    *holon-contents*
 ==============================================================================
 1. INTRODUCTION                                         *holon-introduction*
 
-holon.nvim is a Neovim plugin for Zettelkasten note-taking. It provides note
+Halo.nvim is a fork of holon.nvim for Zettelkasten note-taking. It provides note
 searching, creation, backlink discovery, index browsing, journal management,
 a GTD board, and a link browser. No external plugin dependencies required.
 
 Features: ~
   - Full-text search and file-based note discovery
   - Wiki-style `[[target|title]]` and Markdown `[title](target.md)` links
-  - Backlink detection via ripgrep
+  - Backlink detection across Wiki and Markdown note links
   - Index note navigation with linked-note drill-down
   - Journal entry management
   - Tag and type filtering
   - Smart `gd` mapping for link following with LSP fallback
-  - Template-based note creation with UUID generation
+  - Template-based note creation with sequential numeric IDs
   - GTD board with status/horizon views
   - Link browser for graph exploration
 
@@ -100,12 +100,13 @@ types ~
 
                                                         *holon-config-filename_style*
 filename_style ~
-  (string, default: `"uuid"`)
+  (string, default: `"sequential"`)
   How filenames are determined when creating notes.
+  `"sequential"` uses the next numeric ID across the notes directory.
   `"uuid"` uses an auto-generated UUID v4.
   `"manual"` asks the user for a filename before each note creation.
   The filename input is required; empty input cancels creation.
-  Template variables (including `${UUID}`) are always substituted
+  Template variables (including `${ID}` and `${UUID}`) are always substituted
   regardless of this setting.
 
                                                         *holon-config-default_link_format*
@@ -214,20 +215,22 @@ gtd ~
 ==============================================================================
 4. COMMANDS                                             *holon-commands*
 
-  `:Holon`                       Open notes picker.
-  `:HolonNew`                    Create new note from template.
-  `:HolonGrep` [query]           Grep notes. Optional initial query.
-  `:HolonBacklinks`              Show backlinks to current note.
-  `:HolonLinks`                  Show forward links from current note.
-  `:HolonIndexes`                Browse index notes.
-  `:HolonJournal`                Browse journal entries.
-  `:HolonTags`                   Filter notes by tag.
-  `:HolonTypes`                  Filter notes by type.
-  `:HolonFollow`                 Follow link under cursor.
-  `:HolonToday`                  Open or create today's journal entry.
-  `:HolonGtd`                    Open GTD board.
-  `:HolonBrowse`                 Open link browser.
-  `:HolonOrphans`                Find orphan notes with no links.
+  `:Halo`                        Open notes picker.
+  `:HaloNew`                     Create new note from template.
+  `:HaloGrep` [query]            Grep notes. Optional initial query.
+  `:HaloBacklinks`               Show backlinks to current note.
+  `:HaloLinks`                   Show forward links from current note.
+  `:HaloIndexes`                 Browse index notes.
+  `:HaloJournal`                 Browse journal entries.
+  `:HaloTags`                    Filter notes by tag.
+  `:HaloTypes`                   Filter notes by type.
+  `:HaloFollow`                  Follow link under cursor.
+  `:HaloToday`                   Open or create today's journal entry.
+  `:HaloGtd`                     Open GTD board.
+  `:HaloBrowse`                  Open link browser.
+  `:HaloOrphans`                 Find orphan notes with no links.
+
+  The original `:Holon*` commands remain available as aliases.
 
 ==============================================================================
 5. PICKERS                                              *holon-pickers*
@@ -340,8 +343,7 @@ Smart gd ~
     2. If link found, resolve the target:
        a. Relative to the current file directory
        b. Relative to `notes_path`
-       c. Search configured subdirectories
-       d. `fd` fallback search across `notes_path`
+       c. Find a unique matching filename elsewhere in `notes_path`
     3. If no link found, fall back to LSP `textDocument/definition`
     4. If LSP unavailable, fall back to normal `gd`
 
@@ -349,22 +351,26 @@ Smart gd ~
     `[[target|title]]`    Wiki-style with display text
     `[[target]]`          Wiki-style without display text
     `[title](target.md)`  Markdown-style (local files only)
+    `[[folder/target]]`  Path from the vault root
+    `[[target#Heading]]` Heading anchor
+    `[[target#^block]]` Block anchor
 
-  External URLs (`https://...`) in markdown links are skipped.
+  Markdown destinations may be URL encoded. External URLs are skipped.
+  Duplicate filenames require a path unless one is adjacent to the source.
 
   If a link target cannot be resolved to an existing file, a warning is
   shown and `gd` does not fall through to LSP.
 
                                                         *holon-follow*
-HolonFollow ~
-  The `:HolonFollow` command and `follow_link_under_cursor()` function
+HaloFollow ~
+  The `:HaloFollow` command and `follow_link_under_cursor()` function
   provide the same link-following behavior without LSP fallback.
 
 ==============================================================================
 8. LINK BROWSER                                         *holon-link-browser*
 
 The link browser provides a file-browser-style link navigator for exploring
-the note graph. Open with `:HolonBrowse`.
+the note graph. Open with `:HaloBrowse`.
 
 Three viewing modes: ~
   `forward`      Notes linked FROM the current note
@@ -429,7 +435,8 @@ optionally provide a title.
 
 Template variables: ~
 
-  `${UUID}`              UUID v4
+  `${ID}`                Generated note ID (numeric by default)
+  `${UUID}`              Alias for `${ID}` in existing templates
   `${CURRENT_YEAR}`      Year (4 digits)
   `${CURRENT_MONTH}`     Month (2 digits)
   `${CURRENT_DATE}`      Day (2 digits)
@@ -440,7 +447,7 @@ Template variables: ~
 Example template: >yaml
 
   ---
-  title: ${UUID}
+  title: ${ID}
   created: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}
            T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
   lastmod: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}
@@ -455,7 +462,7 @@ Example template: >yaml
 ==============================================================================
 11. GTD BOARD                                           *holon-gtd*
 
-The GTD board provides task management. Open with `:HolonGtd`.
+The GTD board provides task management. Open with `:HaloGtd`.
 
                                                         *holon-gtd-format*
 GTD Data Model ~
@@ -602,7 +609,7 @@ holon.actions.create_note({template_path}, {title})
 
   Parameters: ~
     {template_path}  (string) Path to template file
-    {title}          (string|nil) Note title, uses UUID if nil
+    {title}          (string|nil) Note title, uses generated ID if nil
 
 holon.actions.follow_link_under_cursor({silent})
                                     *holon.actions.follow_link_under_cursor()*
@@ -649,8 +656,8 @@ holon.links.find_link_at_position({line}, {col})
 
 holon.links.resolve_link_target({target}, {context_filepath})
                                         *holon.links.resolve_link_target()*
-  Resolve a link target to a full file path. Handles UUIDs, filenames,
-  and relative paths.
+  Resolve a link target to a full file path. Handles numeric IDs, UUIDs,
+  vault paths, relative paths, and URL-encoded Markdown destinations.
 
   Parameters: ~
     {target}            (string) Link target

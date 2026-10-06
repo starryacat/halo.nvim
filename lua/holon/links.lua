@@ -1,240 +1,191 @@
--- =============================================================================
--- holon/links: Link parsing and generation for holon.nvim
--- =============================================================================
--- Supports two link formats:
--- 1. Wiki-style: [[UUID|Display Text]] (Foam/Obsidian compatible)
--- 2. Markdown: [title](UUID.md)
--- =============================================================================
+-- holon/links: Obsidian-compatible note links
 
 local utils = require("holon.utils")
-
 local M = {}
+local file_indexes = setmetatable({}, { __mode = "k" })
 
--- UUID pattern for matching
-local UUID_PATTERN = "[a-f0-9]+%-[a-f0-9]+%-[a-f0-9]+%-[a-f0-9]+%-[a-f0-9]+"
-
---- Extract all wiki-style links from content
---- Pattern: [[UUID|Display Text]]
----@param content string File content
----@return table links List of {uuid, display_text}
-local function extract_wiki_links(content)
-  local links = {}
-
-  -- Pattern for [[UUID|Display Text]]
-  for uuid, display_text in content:gmatch("%[%[(" .. UUID_PATTERN .. ")|([^%]]+)%]%]") do
-    table.insert(links, {
-      uuid = uuid,
-      display_text = display_text,
-      format = "wiki",
-    })
-  end
-
-  -- Also match [[UUID]] without display text
-  for uuid in content:gmatch("%[%[(" .. UUID_PATTERN .. ")%]%]") do
-    -- Check if this UUID wasn't already captured with display text
-    local found = false
-    for _, link in ipairs(links) do
-      if link.uuid == uuid then
-        found = true
-        break
-      end
-    end
-    if not found then
-      table.insert(links, {
-        uuid = uuid,
-        display_text = uuid,
-        format = "wiki",
-      })
-    end
-  end
-
-  return links
+local function note_files(notes_path)
+  local extension = require("holon.config").get("extension")
+  return vim.fn.globpath(notes_path, "**/*" .. extension, false, true)
 end
 
---- Extract all markdown links to local files
---- Pattern: [title](UUID.md)
----@param content string File content
----@return table links List of {uuid, title}
-local function extract_markdown_links(content)
-  local links = {}
-
-  -- Pattern for [title](UUID.md)
-  for title, uuid in content:gmatch("%[([^%]]+)%]%((" .. UUID_PATTERN .. ")%.md%)") do
-    table.insert(links, {
-      uuid = uuid,
-      display_text = title,
-      format = "markdown",
-    })
+local function paths_by_name(files)
+  local index = file_indexes[files]
+  if index then return index end
+  index = {}
+  for _, filepath in ipairs(files) do
+    local name = vim.fn.fnamemodify(filepath, ":t")
+    index[name] = index[name] or {}
+    table.insert(index[name], vim.fs.normalize(filepath))
   end
-
-  return links
+  file_indexes[files] = index
+  return index
 end
 
---- Extract all links (both formats) from content
----@param content string File content
----@return table links Combined list of links
+local function decode_url(value)
+  return (value:gsub("%%(%x%x)", function(hex)
+    return string.char(tonumber(hex, 16))
+  end))
+end
+
+local function encode_url(value)
+  return (value:gsub("([^%w%-%._~/])", function(char)
+    return string.format("%%%02X", char:byte())
+  end))
+end
+
+--- Split a destination into its file target and optional heading/block anchor.
+function M.split_target(target)
+  local file_target, anchor = target:match("^(.-)#(.+)$")
+  if not file_target then file_target = target end
+  return decode_url(file_target), anchor and decode_url(anchor) or nil
+end
+
+--- Extract Wiki and Markdown links; uuid is retained for API compatibility.
 function M.extract_all_links(content)
-  local links = {}
-
-  -- Get wiki-style links
-  local wiki_links = extract_wiki_links(content)
-  vim.list_extend(links, wiki_links)
-
-  -- Get markdown links
-  local md_links = extract_markdown_links(content)
-  vim.list_extend(links, md_links)
-
-  return links
-end
-
---- Generate wiki-style link
----@param uuid string Note UUID
----@param display_text string Display text
----@return string link Formatted link [[UUID|Display Text]]
-local function wiki_link(uuid, display_text)
-  if display_text and display_text ~= "" and display_text ~= uuid then
-    return string.format("[[%s|%s]]", uuid, display_text)
-  else
-    return string.format("[[%s]]", uuid)
+  local result = {}
+  for body in content:gmatch("%[%[([^%]]+)%]%]") do
+    local target, display_text = body:match("^(.-)|(.+)$")
+    target = target or body
+    if target ~= "" then
+      table.insert(result, { uuid = target, display_text = display_text or target, format = "wiki" })
+    end
   end
+  for display_text, target in content:gmatch("%[([^%]]+)%]%(([^%)]+)%)") do
+    if not target:match("^[%a][%w+.-]*:") then
+      table.insert(result, { uuid = target, display_text = display_text, format = "markdown" })
+    end
+  end
+  return result
 end
 
---- Generate markdown link
----@param title string Link title
----@param uuid string Note UUID
----@return string link Formatted link [title](UUID.md)
-local function markdown_link(title, uuid)
-  return string.format("[%s](%s.md)", title, uuid)
-end
-
---- Generate link in preferred format
----@param uuid string Note UUID
----@param display_text string Display text
----@param format string|nil Link format ("wiki" or "markdown"), uses config default if nil
----@return string link Formatted link
-function M.generate_link(uuid, display_text, format)
+--- Resolve a note target. Unqualified ambiguous names fail instead of picking at random.
+function M.resolve_link_target(target, context_filepath, candidates)
   local config = require("holon.config")
-  format = format or config.get("default_link_format")
-
-  if format == "markdown" then
-    return markdown_link(display_text, uuid)
-  else
-    return wiki_link(uuid, display_text)
+  local notes_path = vim.fs.normalize(config.get("notes_path"))
+  local extension = config.get("extension")
+  local file_target = M.split_target(target)
+  if file_target == "" then
+    return context_filepath and vim.fs.normalize(context_filepath) or nil
   end
+  file_target = file_target:gsub("/+$", "")
+  if file_target:sub(-#extension) ~= extension then
+    file_target = file_target .. extension
+  end
+  local function existing(path)
+    path = vim.fs.normalize(path)
+    return utils.file_exists(path) and path or nil
+  end
+  if file_target:sub(1, 1) == "/" then return existing(file_target) end
+  if file_target:match("^%.%./") or file_target:match("^%./") then
+    if context_filepath then
+      return existing(vim.fn.fnamemodify(context_filepath, ":h") .. "/" .. file_target)
+    end
+    return nil
+  end
+  if file_target:find("/", 1, true) then
+    return existing(notes_path .. "/" .. file_target)
+  end
+  if context_filepath then
+    local adjacent = existing(vim.fn.fnamemodify(context_filepath, ":h") .. "/" .. file_target)
+    if adjacent then return adjacent end
+  end
+  local root_file = existing(notes_path .. "/" .. file_target)
+  if root_file then return root_file end
+  local files = candidates or note_files(notes_path)
+  local matches = paths_by_name(files)[file_target] or {}
+  if #matches == 1 then return matches[1] end
+  if #matches > 1 then return nil end
+
+  -- Older vaults may have a UUID embedded in a longer filename.
+  local legacy_uuid = file_target:sub(1, -#extension - 1)
+  if not legacy_uuid:match("^[a-f0-9]+%-[a-f0-9]+%-[a-f0-9]+%-[a-f0-9]+%-[a-f0-9]+$") then
+    return nil
+  end
+  local match
+  for _, filepath in ipairs(files) do
+    if utils.extract_uuid_from_path(filepath) == legacy_uuid then
+      if match then return nil end
+      match = vim.fs.normalize(filepath)
+    end
+  end
+  return match
 end
 
---- Find link target at cursor position in a line
----@param line string Line content
----@param col number 0-indexed byte offset (from nvim_win_get_cursor)
----@return string|nil target Link target if cursor is on a link
+local function link_target(target)
+  local config = require("holon.config")
+  local notes_path = vim.fs.normalize(config.get("notes_path"))
+  local extension = config.get("extension")
+  local filepath = M.resolve_link_target(target)
+  if not filepath then return target end
+  local stem = vim.fn.fnamemodify(filepath, ":t:r")
+  local count = #((paths_by_name(note_files(notes_path)))[stem .. extension] or {})
+  if count == 1 then return stem end
+  local relative = filepath:sub(#notes_path + 2)
+  return relative:sub(1, -#extension - 1)
+end
+
+--- Generate a link using a unique filename or vault-root path.
+function M.generate_link(target, display_text, format)
+  local config = require("holon.config")
+  local file_target, anchor = M.split_target(target)
+  local destination = file_target == "" and "" or link_target(file_target)
+  local suffix = anchor and "#" .. anchor or ""
+  format = format or config.get("default_link_format")
+  if format == "markdown" then
+    local text = display_text or vim.fn.fnamemodify(destination, ":t")
+    local path = destination ~= "" and encode_url(destination .. config.get("extension")) or ""
+    local fragment = anchor and "#" .. encode_url(anchor) or ""
+    return string.format("[%s](%s%s)", text, path, fragment)
+  end
+  if display_text and display_text ~= "" and display_text ~= destination .. suffix then
+    return string.format("[[%s|%s]]", destination .. suffix, display_text)
+  end
+  return string.format("[[%s]]", destination .. suffix)
+end
+
+--- Find the target of the Wiki or Markdown link under a 0-indexed cursor.
 function M.find_link_at_position(line, col)
-  -- Wiki: [[target|title]] or [[target]]
   local pos = 1
   while true do
-    local s, _, target = line:find("%[%[([^%]|]+)", pos)
-    if not s then break end
-    local close = line:find("%]%]", s)
-    if close and col >= s - 1 and col <= close then
-      return target
-    end
-    pos = s + 1
+    local first, last, body = line:find("%[%[([^%]]+)%]%]", pos)
+    if not first then break end
+    if col >= first - 1 and col < last then return body:match("^([^|]+)") end
+    pos = last + 1
   end
-
-  -- Markdown: [title](target) — skip external URLs
   pos = 1
   while true do
-    local s = line:find("%[", pos)
-    if not s then break end
-    local _, close, target = line:find("%]%(([^%)]+)%)", s)
-    if close and target and col >= s - 1 and col <= close then
-      if not target:match("^https?://") then
-        return target
-      end
+    local first, last, _, target = line:find("%[([^%]]+)%]%(([^%)]+)%)", pos)
+    if not first then break end
+    if col >= first - 1 and col < last then
+      if not target:match("^[%a][%w+.-]*:") then return target end
+      return nil
     end
-    pos = s + 1
+    pos = last + 1
   end
-
   return nil
 end
 
---- Resolve a link target to full file path
---- Handles UUIDs, filenames, and relative paths
----@param target string Link target (UUID, filename, or relative path)
----@param context_filepath string|nil Current file path for relative resolution
----@return string|nil filepath Full path or nil if not found
-function M.resolve_link_target(target, context_filepath)
-  local config = require("holon.config")
-  local notes_path = config.get("notes_path")
-  local extension = config.get("extension")
-  local clean = target:gsub("%.md$", "")
-
-  -- 1. Relative to current file
-  if context_filepath then
-    local dir = vim.fn.fnamemodify(context_filepath, ":h")
-    for _, candidate in ipairs({ dir .. "/" .. clean .. extension, dir .. "/" .. target }) do
-      if utils.file_exists(candidate) then
-        return candidate
-      end
-    end
-  end
-
-  -- 2. Relative to notes_path
-  for _, candidate in ipairs({ notes_path .. "/" .. clean .. extension, notes_path .. "/" .. target }) do
-    if utils.file_exists(candidate) then
-      return candidate
-    end
-  end
-
-  -- 3. Search configured directories
-  for _, subdir in pairs(config.get("directories")) do
-    local candidate = notes_path .. "/" .. subdir .. "/" .. clean .. extension
-    if utils.file_exists(candidate) then
-      return candidate
-    end
-  end
-
-  -- 4. fd fallback
-  local result = vim.fn.systemlist({ "fd", "--type", "f", "--glob", clean .. extension, notes_path })
-  if #result > 0 then
-    return result[1]
-  end
-
-  return nil
-end
-
---- Find all notes that link to a specific UUID
---- Uses ripgrep for performance
----@param target_uuid string UUID to search for
----@param notes_path string|nil Base notes directory
----@return table backlinks List of file paths that link to target
+--- Find backlinks, including path and anchor links.
 function M.find_backlinks(identifier, notes_path)
-  local config = require("holon.config")
-  notes_path = notes_path or config.get("notes_path")
-
-  -- Search for both link formats using multiple patterns:
-  -- 1. Wiki-style: [[identifier| or [[identifier]]
-  -- 2. Markdown: (identifier.md)
-  local result = vim.fn.systemlist({
-    "rg",
-    "--files-with-matches",
-    "--glob",
-    "*.md",
-    "-e",
-    "\\[\\[" .. identifier,
-    "-e",
-    "\\(" .. identifier .. "\\.md\\)",
-    notes_path,
-  })
-
-  -- Filter out the source file itself
+  notes_path = notes_path or require("holon.config").get("notes_path")
+  local target_path = M.resolve_link_target(identifier)
+  if not target_path then return {} end
   local backlinks = {}
-  for _, filepath in ipairs(result) do
-    local filename = vim.fn.fnamemodify(filepath, ":t:r")
-    if filename ~= identifier then
-      table.insert(backlinks, filepath)
+  local files = note_files(notes_path)
+  for _, filepath in ipairs(files) do
+    if vim.fs.normalize(filepath) ~= target_path then
+      local content = utils.read_file(filepath)
+      if content then
+        for _, link in ipairs(M.extract_all_links(content)) do
+          if M.resolve_link_target(link.uuid, filepath, files) == target_path then
+            table.insert(backlinks, filepath)
+            break
+          end
+        end
+      end
     end
   end
-
   return backlinks
 end
 

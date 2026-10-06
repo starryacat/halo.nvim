@@ -1,6 +1,6 @@
 # Architecture
 
-Developer reference for holon.nvim internals.
+Developer reference for Halo.nvim internals. The Lua module remains `holon`.
 
 ## Module Layers
 
@@ -111,7 +111,7 @@ sequenceDiagram
     participant make_entry as zk/make_entry
     participant fm as frontmatter
 
-    User->>pickers: HolonNotes
+    User->>pickers: Halo
     pickers->>finders: find_notes
     finders->>fd: fd type f extension md
     fd-->>finders: File paths
@@ -137,7 +137,7 @@ sequenceDiagram
     participant finders as zk/finders
     participant fm as frontmatter
 
-    User->>tags: HolonTags
+    User->>tags: HaloTags
     tags->>finders: collect_tags
     finders->>finders: list_files
     loop Each file
@@ -166,7 +166,7 @@ sequenceDiagram
     participant utils
     participant config
 
-    User->>pickers: HolonNew
+    User->>pickers: HaloNew
     pickers->>pickers: Show template list
     User->>pickers: Select template
     pickers->>User: Prompt for title
@@ -190,7 +190,7 @@ sequenceDiagram
     participant action as zk/actions
     participant lnk as links
 
-    User->>action: gd or HolonFollow
+    User->>action: gd or HaloFollow
     action->>lnk: find_link_at_position
     Note over lnk: Match wiki or markdown link
     lnk-->>action: target or nil
@@ -215,7 +215,7 @@ sequenceDiagram
     participant lnk as links
     participant rg
 
-    User->>pickers: HolonBacklinks
+    User->>pickers: HaloBacklinks
     pickers->>pickers: Get identifier from current file
     Note over pickers: UUID or filename fallback
 
@@ -244,7 +244,7 @@ sequenceDiagram
     participant finders as zk/finders
     participant lnk as links
 
-    User->>idx: HolonIndexes
+    User->>idx: HaloIndexes
     idx->>finders: find_index_notes
     finders-->>idx: Index note entries
     idx->>User: Display index notes
@@ -298,7 +298,7 @@ sequenceDiagram
     participant render as gtd/render
     participant timeline as gtd/timeline
 
-    User->>board: HolonGtd
+    User->>board: HaloGtd
     board->>state: load
     state->>gtdfinders: find_tasks
     gtdfinders->>filesearch: list_files
@@ -330,7 +330,7 @@ sequenceDiagram
     participant rg
     participant finders as zk/finders
 
-    User->>browser: HolonBrowse
+    User->>browser: HaloBrowse
     browser->>browser: open(current_file)
     browser->>lnk: collect_forward_links
     Note over lnk: Extract links from buffer, resolve targets

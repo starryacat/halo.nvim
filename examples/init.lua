@@ -1,10 +1,10 @@
--- Example holon.nvim setup pointing to the examples/ vault
+-- Example Halo.nvim setup pointing to the examples/ vault
 --
--- Usage (from normal Neovim with holon.nvim already installed):
+-- Usage (from normal Neovim with Halo.nvim already installed):
 --   :luafile examples/init.lua
 --
 -- This overrides notes_path to use the bundled example vault,
--- so you can try :Holon, :HolonGtd, :HolonIndexes, etc.
+-- so you can try :Halo, :HaloGtd, :HaloIndexes, etc.
 
 local examples_dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h")
 
@@ -22,4 +22,4 @@ require("holon").setup({
   templates_path = "templates",
 })
 
-vim.notify("Holon: notes_path -> " .. examples_dir, vim.log.levels.INFO)
+vim.notify("Halo: notes_path -> " .. examples_dir, vim.log.levels.INFO)

@@ -1,13 +1,13 @@
-# holon.nvim GTD機能 実装計画
+# Halo.nvim GTD機能 実装計画
 
 ## Context
 
-holon.nvimにGTD機能を追加する。
+Halo.nvimにGTD機能を追加する。
 Zettelkastenノートをタスクとして管理し、lazygit風の3パネルUIで
 ステータス管理・タイムライン可視化・依存関係追跡を実現する。
 
-リポジトリ名・Lua名前空間は holon.nvim / holon のまま維持。
-GTDコードは `lua/holon/gtd/` に配置し、`:HolonGtd` で起動する。
+フォーク名は Halo.nvim、Lua 名前空間は互換性のため `holon` を維持。
+GTDコードは `lua/holon/gtd/` に配置し、`:HaloGtd` で起動する。
 遅延ロードにより、GTDを使わないユーザーへの影響はゼロ。
 
 ---
@@ -21,7 +21,7 @@ GTDコードは `lua/holon/gtd/` に配置し、`:HolonGtd` で起動する。
 **現在の project.md (`personal-knowledge/.foam/templates/project.md`):**
 ```yaml
 ---
-title: ${UUID}
+title: ${ID}
 created: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
 lastmod: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
 url: null
@@ -34,7 +34,7 @@ tags:
 **GTDフィールド追加後:**
 ```yaml
 ---
-title: ${UUID}
+title: ${ID}
 created: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
 lastmod: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
 url: null
@@ -150,7 +150,7 @@ lua/holon/gtd/
 | `lua/holon/finders.lua` | `find_tasks()`, `collect_statuses()`, `collect_horizons()` 追加 |
 | `lua/holon/config.lua` | `gtd` 設定セクション追加 |
 | `lua/holon/init.lua` | `gtd` を遅延ロード対象に追加 |
-| `plugin/holon.lua` | `:HolonGtd` コマンド追加 |
+| `plugin/holon.lua` | `:HaloGtd` コマンド追加 |
 
 ### 再利用する既存関数
 
@@ -227,7 +227,7 @@ extmarks + highlight groups で色付け。選択行ハイライト。
 
 ### Phase 6: 統合
 
-- `plugin/holon.lua` に `:HolonGtd` コマンド追加
+- `plugin/holon.lua` に `:HaloGtd` コマンド追加
 - `lua/holon/init.lua` に gtd モジュール遅延ロード追加
 - `personal-knowledge/.foam/templates/project.md` にGTDフィールドを追加
   （データモデルのbefore/after参照）
@@ -242,7 +242,7 @@ extmarks + highlight groups で色付け。選択行ハイライト。
 
 ## 検証方法
 
-1. `:HolonGtd` でボードが開き、`q` で閉じること
+1. `:HaloGtd` でボードが開き、`q` で閉じること
 2. 左パネルでステータス選択 → 中央パネルがフィルタされること
 3. `S`/`H` でStatus/Horizon表示が切り替わること
 4. `h`/`l` でステータス変更 → frontmatterが即更新されること

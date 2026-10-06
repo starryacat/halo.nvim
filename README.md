@@ -1,4 +1,6 @@
-# holon.nvim
+# Halo.nvim
+
+Halo.nvim is a fork of [Holon.nvim](https://github.com/sunbluesome/holon.nvim). Its commands use the `:Halo` prefix. The `holon` Lua module and original `:Holon*` commands remain available for compatibility.
 
 Zettelkasten note-taking and GTD task management for Neovim. Zero external plugin dependencies.
 
@@ -8,11 +10,11 @@ Fuzzy search, live grep, backlink discovery, index navigation, journal managemen
 
 - Fuzzy note search with live preview
 - Live grep across notes via ripgrep
-- Wiki-style `[[target|title]]` and Markdown `[title](target.md)` link formats
+- Obsidian-compatible Wiki and Markdown note links
 - Backlink detection and navigation
 - Index note browsing with drill-down into linked notes
 - Tag and type filtering (YAML frontmatter and inline `#tags`)
-- Template-based note creation with UUID generation
+- Template-based note creation with sequential numeric IDs
 - Journal management and quick today's entry
 - Smart `gd` mapping with LSP fallback for link navigation
 - GTD board with status/horizon/inbox/done views and timeline visualization
@@ -24,15 +26,15 @@ Fuzzy search, live grep, backlink discovery, index navigation, journal managemen
 
 ### Zettelkasten
 
-| `:Holon` - Notes | `:HolonGrep` - Grep |
+| `:Halo` - Notes | `:HaloGrep` - Grep |
 |---|---|
 | ![notes](assets/zk_list.png) | ![grep](assets/zk_grep.png) |
 
-| `:HolonIndexes` - Index drill-down | `:HolonJournal` - Journal |
+| `:HaloIndexes` - Index drill-down | `:HaloJournal` - Journal |
 |---|---|
 | ![index](assets/zk_index.png) | ![journal](assets/zk_journal.png) |
 
-| `:HolonOrphans` - Orphan notes | |
+| `:HaloOrphans` - Orphan notes | |
 |---|---|
 | ![orphans](assets/zk_orphan.png) | |
 
@@ -48,7 +50,7 @@ Fuzzy search, live grep, backlink discovery, index navigation, journal managemen
 
 ### GTD
 
-| `:HolonGtd` - Board (status) | Board (horizon) |
+| `:HaloGtd` - Board (status) | Board (horizon) |
 |---|---|
 | ![board](assets/gtd_board.png) | ![horizon](assets/gtd_board_horizon.png) |
 
@@ -73,21 +75,21 @@ Fuzzy search, live grep, backlink discovery, index navigation, journal managemen
 
 ```lua
 {
-  "your-username/holon.nvim",
+  "starryacat/halo.nvim",
   keys = {
-    { "<leader>zn", "<cmd>Holon<cr>", desc = "Holon: Notes" },
-    { "<leader>zg", "<cmd>HolonGrep<cr>", desc = "Holon: Grep" },
-    { "<leader>zc", "<cmd>HolonNew<cr>", desc = "Holon: New note" },
-    { "<leader>zb", "<cmd>HolonBacklinks<cr>", desc = "Holon: Backlinks" },
-    { "<leader>zi", "<cmd>HolonIndexes<cr>", desc = "Holon: Indexes" },
-    { "<leader>zj", "<cmd>HolonJournal<cr>", desc = "Holon: Journal" },
-    { "<leader>zt", "<cmd>HolonTags<cr>", desc = "Holon: Tags" },
-    { "<leader>zT", "<cmd>HolonTypes<cr>", desc = "Holon: Types" },
-    { "<leader>zf", "<cmd>HolonFollow<cr>", desc = "Holon: Follow link" },
-    { "<leader>zd", "<cmd>HolonToday<cr>", desc = "Holon: Today's journal" },
-    { "<leader>zG", "<cmd>HolonGtd<cr>", desc = "Holon: GTD board" },
-    { "<leader>zl", "<cmd>HolonBrowse<cr>", desc = "Holon: Link browser" },
-    { "<leader>zo", "<cmd>HolonOrphans<cr>", desc = "Holon: Orphan notes" },
+    { "<leader>zn", "<cmd>Halo<cr>", desc = "Halo: Notes" },
+    { "<leader>zg", "<cmd>HaloGrep<cr>", desc = "Halo: Grep" },
+    { "<leader>zc", "<cmd>HaloNew<cr>", desc = "Halo: New note" },
+    { "<leader>zb", "<cmd>HaloBacklinks<cr>", desc = "Halo: Backlinks" },
+    { "<leader>zi", "<cmd>HaloIndexes<cr>", desc = "Halo: Indexes" },
+    { "<leader>zj", "<cmd>HaloJournal<cr>", desc = "Halo: Journal" },
+    { "<leader>zt", "<cmd>HaloTags<cr>", desc = "Halo: Tags" },
+    { "<leader>zT", "<cmd>HaloTypes<cr>", desc = "Halo: Types" },
+    { "<leader>zf", "<cmd>HaloFollow<cr>", desc = "Halo: Follow link" },
+    { "<leader>zd", "<cmd>HaloToday<cr>", desc = "Halo: Today's journal" },
+    { "<leader>zG", "<cmd>HaloGtd<cr>", desc = "Halo: GTD board" },
+    { "<leader>zl", "<cmd>HaloBrowse<cr>", desc = "Halo: Link browser" },
+    { "<leader>zo", "<cmd>HaloOrphans<cr>", desc = "Halo: Orphan notes" },
   },
   opts = {
     notes_path = vim.fn.expand("~/notes"),
@@ -102,20 +104,20 @@ Fuzzy search, live grep, backlink discovery, index navigation, journal managemen
 
 | Command | Description |
 |---------|-------------|
-| `:Holon` | Find and open notes |
-| `:HolonNew` | Create a note from template |
-| `:HolonGrep [query]` | Search note contents |
-| `:HolonBacklinks` | Show backlinks to current note |
-| `:HolonLinks` | Show forward links from current note |
-| `:HolonIndexes` | Browse index notes with drill-down |
-| `:HolonJournal` | Browse journal entries |
-| `:HolonTags` | Filter notes by tag |
-| `:HolonTypes` | Filter notes by type |
-| `:HolonFollow` | Follow link under cursor |
-| `:HolonToday` | Open or create today's journal entry |
-| `:HolonGtd` | Open GTD board |
-| `:HolonBrowse` | Open link browser |
-| `:HolonOrphans` | Find orphan notes |
+| `:Halo` | Find and open notes |
+| `:HaloNew` | Create a note from template |
+| `:HaloGrep [query]` | Search note contents |
+| `:HaloBacklinks` | Show backlinks to current note |
+| `:HaloLinks` | Show forward links from current note |
+| `:HaloIndexes` | Browse index notes with drill-down |
+| `:HaloJournal` | Browse journal entries |
+| `:HaloTags` | Filter notes by tag |
+| `:HaloTypes` | Filter notes by type |
+| `:HaloFollow` | Follow link under cursor |
+| `:HaloToday` | Open or create today's journal entry |
+| `:HaloGtd` | Open GTD board |
+| `:HaloBrowse` | Open link browser |
+| `:HaloOrphans` | Find orphan notes |
 
 ## Pickers
 
@@ -179,16 +181,26 @@ All pickers share the following keybindings:
 Inside `notes_path`, `gd` is automatically mapped in Markdown files to follow links:
 
 - Resolves the link at the cursor
-- Supports `[[target|title]]`, `[[target]]`, and `[title](target.md)`
+- Supports `[[8]]`, `[[8|Title]]`, `[[Notes/Permanent/8|Title]]`, and Markdown links
+- Follows `#Heading` and `#^block-id` anchors
 - Skips external URLs (`https://...`)
 - Falls back to LSP go-to-definition, then normal `gd`
 
-Link targets can be UUIDs, filenames, or relative paths. The resolver searches in this order:
+Link targets can be numeric IDs, existing UUIDs, filenames, or paths from the vault root. Inserted links use the filename when it is unique and a vault path when another note has the same filename. Markdown destinations are URL encoded. Use a vault path to make links to duplicate filenames unambiguous.
 
-1. Relative to the current file
-2. Relative to `notes_path`
-3. Configured subdirectories
-4. `fd` fallback search
+The resolver checks the current note's directory, the vault root, then unique filenames elsewhere in the vault. Paths beginning with `./` or `../` are resolved relative to the current note.
+
+## Halo.nvim changes from Holon.nvim
+
+| Area | Patch location | Change |
+|------|----------------|--------|
+| Sequential IDs | `lua/holon/config.lua`, `lua/holon/utils.lua`, `lua/holon/zk/actions.lua` | New notes default to the next numeric filename across the vault; existing files are not overwritten. `filename_style = "uuid"` remains available. |
+| Templates | `examples/templates/`, `lua/holon/utils.lua` | `${ID}` is the generated ID. Existing `${UUID}` templates continue to work. |
+| Obsidian links | `lua/holon/links.lua`, `lua/holon/zk/actions.lua`, `lua/holon/zk/pickers.lua` | Generate unique Wiki or URL encoded Markdown links; parse vault paths and follow heading or block anchors. |
+| Link views | `lua/holon/graph.lua`, `lua/holon/zk/link_browser.lua` | Resolve path and anchor links for graph and backlink views. |
+| Commands | `plugin/holon.lua` | Use `:Halo` and `:Halo*` commands; keep `:Holon*` aliases. |
+
+The original Holon.nvim notes and UUID links remain readable. The `holon` Lua module remains available.
 
 ## Link Browser
 
@@ -297,13 +309,14 @@ All of the following are recognized:
 
 ## Templates
 
-Place template files in your `templates_path` directory (default: `templates/`). When creating a note with `:HolonNew`, you select a template and the variables are substituted.
+Place template files in your `templates_path` directory (default: `templates/`). When creating a note with `:HaloNew`, you select a template and the variables are substituted.
 
 ### Template Variables
 
 | Variable | Description |
 |----------|-------------|
-| `${UUID}` | UUID v4 |
+| `${ID}` | Next numeric note ID across the vault |
+| `${UUID}` | Alias for `${ID}` in existing templates (UUID v4 with `filename_style = "uuid"`) |
 | `${CURRENT_YEAR}` | Year (4 digits) |
 | `${CURRENT_MONTH}` | Month (2 digits) |
 | `${CURRENT_DATE}` | Day (2 digits) |
@@ -315,7 +328,7 @@ Place template files in your `templates_path` directory (default: `templates/`).
 
 ```markdown
 ---
-title: ${UUID}
+title: ${ID}
 created: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
 lastmod: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
 url: null
@@ -353,8 +366,8 @@ require("holon").setup({
   -- File extension
   extension = ".md",
 
-  -- Filename style: "uuid" (auto-generated UUID) or "manual" (user-specified)
-  filename_style = "uuid",
+  -- Filename style: "sequential" (next numeric ID), "uuid", or "manual"
+  filename_style = "sequential",
 
   -- Link format: "wiki" for [[target|title]], "markdown" for [title](target.md)
   default_link_format = "wiki",

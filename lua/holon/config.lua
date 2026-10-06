@@ -26,10 +26,10 @@ M.defaults = {
   -- File extension for notes
   extension = ".md",
 
-  -- Filename style: "uuid" = auto-generated UUID, "manual" = user-specified filename
-  filename_style = "uuid",
+  -- Filename style: "sequential" = next numeric ID, "uuid" = UUID, "manual" = user-specified
+  filename_style = "sequential",
 
-  -- Link format preference: "wiki" for [[UUID|title]] or "markdown" for [title](UUID.md)
+  -- Link format preference: "wiki" for [[ID|title]] or "markdown" for [title](ID.md)
   default_link_format = "wiki",
 
   -- Timezone offset from UTC in hours (nil = use system local time, 9 = JST, -5 = EST)
@@ -123,17 +123,17 @@ function M.setup(opts)
   -- Validate notes_path
   local notes_path = M.options.notes_path
   if not notes_path or notes_path == "" then
-    vim.notify("[Holon] notes_path is not configured", vim.log.levels.WARN)
+    vim.notify("[Halo] notes_path is not configured", vim.log.levels.WARN)
   elseif not vim.uv.fs_stat(notes_path) then
-    vim.notify("[Holon] notes_path does not exist: " .. notes_path, vim.log.levels.WARN)
+    vim.notify("[Halo] notes_path does not exist: " .. notes_path, vim.log.levels.WARN)
   end
 
   -- Check external dependencies
   if vim.fn.executable("fd") ~= 1 then
-    vim.notify("[Holon] 'fd' not found. Install fd: https://github.com/sharkdp/fd", vim.log.levels.ERROR)
+    vim.notify("[Halo] 'fd' not found. Install fd: https://github.com/sharkdp/fd", vim.log.levels.ERROR)
   end
   if vim.fn.executable("rg") ~= 1 then
-    vim.notify("[Holon] 'rg' not found. Install ripgrep: https://github.com/BurntSushi/ripgrep", vim.log.levels.ERROR)
+    vim.notify("[Halo] 'rg' not found. Install ripgrep: https://github.com/BurntSushi/ripgrep", vim.log.levels.ERROR)
   end
 
   -- Setup highlight groups

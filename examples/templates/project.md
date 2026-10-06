@@ -1,5 +1,5 @@
 ---
-title: ${UUID}
+title: ${ID}
 created: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
 lastmod: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}
 type: project
@@ -13,4 +13,3 @@ tags: []
 ## Tasks
 
 - [ ]
-

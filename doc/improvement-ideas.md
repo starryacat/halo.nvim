@@ -1,4 +1,4 @@
-# holon.nvim Improvement Ideas
+# Halo.nvim Improvement Ideas
 
 Zettelkasten + GTD hybrid plugin as more refined and user-friendly tool.
 
@@ -10,7 +10,7 @@ Zettelkasten + GTD hybrid plugin as more refined and user-friendly tool.
 
 Currently `CR` closes the board to open a note. Add the ability to return
 to the board (same cursor position) after closing the note or re-running
-`:HolonGtd`. This makes quick-check workflows much smoother.
+`:HaloGtd`. This makes quick-check workflows much smoother.
 
 ### 2. Journal + GTD integration
 
@@ -18,7 +18,7 @@ When opening today's journal, auto-insert (or show via virtual text) a
 summary of today/overdue tasks. Extend to "this week's tasks" for GTD
 Weekly Review support.
 
-### 3. Quick Capture (`:HolonCapture`)
+### 3. Quick Capture (`:HaloCapture`)
 
 Create an inbox task from any buffer with a single command. Prompt for
 title only, generate a note with `status: inbox` immediately. An external
@@ -28,7 +28,7 @@ equivalent of the board's `a` (add) action.
 
 ## Mid-term: Deeper Features
 
-### 4. Note promotion workflow (`:HolonPromote`)
+### 4. Note promotion workflow (`:HaloPromote`)
 
 Promote a fleeting note to permanent: change `type`, move file to the
 correct directory, and auto-update all link references. Completes the

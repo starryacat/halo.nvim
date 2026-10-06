@@ -11,8 +11,8 @@ local M = {}
 
 --- Create a new note from template
 ---@param template_path string Path to template file
----@param title string|nil Note title (uses UUID if nil)
----@param filename string|nil Custom filename stem (uses UUID if nil)
+---@param title string|nil Note title (uses generated ID if nil)
+---@param filename string|nil Custom filename stem (uses generated ID if nil)
 ---@return string|nil filepath Path to created note or nil on error
 function M.create_note(template_path, title, filename)
   -- Read template
@@ -24,13 +24,14 @@ function M.create_note(template_path, title, filename)
 
   -- Generate template variables
   local vars = utils.get_template_vars()
-  local uuid = vars.UUID
-  local file_stem = (filename and filename ~= "") and filename or uuid
+  local id = vars.ID
+  local file_stem = (filename and filename ~= "") and filename or id
 
-  -- Set title (use UUID if not provided)
+  -- Set title (use generated ID if not provided)
   if title and title ~= "" then
     -- Replace title in template
     template_content = template_content:gsub("title: %${UUID}", "title: " .. title)
+    template_content = template_content:gsub("title: %${ID}", "title: " .. title)
   end
 
   -- Substitute all template variables
@@ -53,6 +54,11 @@ function M.create_note(template_path, title, filename)
   -- Create file path
   local filepath = target_dir .. "/" .. file_stem .. extension
 
+  if utils.file_exists(filepath) then
+    utils.notify("Note already exists: " .. filepath, "error")
+    return nil
+  end
+
   -- Write file
   if not utils.write_file(filepath, content) then
     utils.notify("Failed to create note: " .. filepath, "error")
@@ -64,7 +70,7 @@ function M.create_note(template_path, title, filename)
 end
 
 --- Insert link to a note at cursor position
----@param uuid string Note UUID
+---@param uuid string Note path or identifier
 ---@param display_text string Display text for link
 ---@param format string|nil Link format ("wiki" or "markdown")
 function M.insert_link(uuid, display_text, format)
@@ -129,9 +135,34 @@ function M.follow_link_under_cursor(silent)
   local col = vim.api.nvim_win_get_cursor(0)[2]
   local target = links.find_link_at_position(line, col)
   if target then
-    local filepath = links.resolve_link_target(target, vim.fn.expand("%:p"))
+    local file_target, anchor = links.split_target(target)
+    local filepath = links.resolve_link_target(file_target, vim.fn.expand("%:p"))
     if filepath then
       vim.cmd("edit " .. vim.fn.fnameescape(filepath))
+      if anchor then
+        local block = anchor:match("^%^(.*)$")
+        local found
+        for i, text in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
+          if block then
+            local marker = "%^" .. utils.escape_pattern(block) .. "%s*$"
+            if text:match("^" .. marker) or text:match("%s+" .. marker) then
+              found = i
+              break
+            end
+          else
+            local heading = text:match("^#+%s+(.+)%s*$")
+            if heading and vim.trim(heading) == anchor:match("[^#]+$") then
+              found = i
+              break
+            end
+          end
+        end
+        if found then
+          vim.api.nvim_win_set_cursor(0, { found, 0 })
+        else
+          utils.notify("Anchor not found: " .. anchor, "warn")
+        end
+      end
       return true
     end
     utils.notify("Note not found: " .. target, "warn")

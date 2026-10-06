@@ -47,12 +47,7 @@ end
 ---@param filepath string Note file path
 ---@return table[] links { { filepath, title, note_type }, ... }
 local function collect_backlinks(filepath)
-  local uuid = utils.extract_uuid_from_path(filepath)
-  if not uuid then
-    return {}
-  end
-
-  local backlink_paths = links.find_backlinks(uuid)
+  local backlink_paths = links.find_backlinks(filepath)
   local result = {}
 
   for _, bp in ipairs(backlink_paths) do

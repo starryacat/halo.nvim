@@ -40,12 +40,14 @@ end
 function M.extract_uuid_from_path(filepath)
   local filename = vim.fn.fnamemodify(filepath, ":t:r")
   -- UUID v4 pattern: 8-4-4-4-12 hex characters
-  local uuid = filename:match("^([a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+)$")
+  local pattern = string.rep("%x", 8) .. "%-" .. string.rep("%x", 4) .. "%-"
+    .. string.rep("%x", 4) .. "%-" .. string.rep("%x", 4) .. "%-" .. string.rep("%x", 12)
+  local uuid = filename:match("^(" .. pattern .. ")$")
   if uuid then
     return uuid
   end
   -- Try to find UUID anywhere in filename
-  return filename:match("([a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+-[a-f0-9]+)")
+  return filename:match("(" .. pattern .. ")")
 end
 
 --- Generate UUID v4
@@ -58,6 +60,23 @@ local function generate_uuid()
     local v = (c == "x") and random(0, 0xf) or random(8, 0xb)
     return string.format("%x", v)
   end)
+end
+
+--- Find the next numeric note ID across the entire vault.
+--- Only numeric file stems count, so existing UUIDs and journal dates are ignored.
+---@return string id
+function M.next_note_id()
+  local config = require("holon.config")
+  local notes_path = config.get("notes_path")
+  local extension = config.get("extension")
+  local highest = 0
+  for _, filepath in ipairs(vim.fn.globpath(notes_path, "**/*" .. extension, false, true)) do
+    local stem = vim.fn.fnamemodify(filepath, ":t:r")
+    if stem:match("^%d+$") then
+      highest = math.max(highest, tonumber(stem))
+    end
+  end
+  return tostring(highest + 1)
 end
 
 --- Get current time adjusted for configured timezone
@@ -90,8 +109,11 @@ end
 ---@return table vars Template variables
 function M.get_template_vars()
   local now = os.date("*t", get_local_time())
+  local config = require("holon.config")
+  local id = config.get("filename_style") == "uuid" and generate_uuid() or M.next_note_id()
   return {
-    UUID = generate_uuid(),
+    ID = id,
+    UUID = id, -- Keep existing templates working with sequential IDs.
     CURRENT_YEAR = string.format("%04d", now.year),
     CURRENT_MONTH = string.format("%02d", now.month),
     CURRENT_DATE = string.format("%02d", now.day),
@@ -254,7 +276,7 @@ function M.notify(msg, level)
     warn = vim.log.levels.WARN,
     error = vim.log.levels.ERROR,
   }
-  vim.notify("[Holon] " .. msg, levels[level] or vim.log.levels.INFO)
+  vim.notify("[Halo] " .. msg, levels[level] or vim.log.levels.INFO)
 end
 
 --- Check if file exists

@@ -47,11 +47,11 @@ end
 function M.notes(opts)
   opts = opts or {}
 
-  local title = "Holon: Notes"
+  local title = "Halo: Notes"
   if opts.tags then
-    title = "Holon: Notes [" .. table.concat(opts.tags, ", ") .. "]"
+    title = "Halo: Notes [" .. table.concat(opts.tags, ", ") .. "]"
   elseif opts.types then
-    title = "Holon: Notes [" .. table.concat(opts.types, ", ") .. "]"
+    title = "Halo: Notes [" .. table.concat(opts.types, ", ") .. "]"
   end
 
   local raw
@@ -87,7 +87,7 @@ function M.notes(opts)
       local sel = picker.get_selected()
       if sel and sel.uuid then
         picker.close()
-        M.backlinks({ uuid = sel.uuid, title = sel.title, back = opts })
+        M.backlinks({ uuid = sel.value, title = sel.title, back = opts })
       end
     end,
     show_forward_links = function()
@@ -102,7 +102,7 @@ function M.notes(opts)
       if sel then
         picker.close()
         vim.schedule(function()
-          actions.insert_link(sel.uuid, sel.title)
+          actions.insert_link(sel.value, sel.title)
         end)
       end
     end,
@@ -163,7 +163,7 @@ function M.grep_notes(opts)
   local rg_args = finders.get_rg_args()
 
   picker.open({
-    title = "Holon: Grep Notes",
+    title = "Halo: Grep Notes",
     items = {},
     dynamic_source = function(query)
       if not query or query == "" then
@@ -225,7 +225,7 @@ function M.filter_type(opts)
   end
 
   picker.open({
-    title = "Holon: Filter by Type",
+    title = "Halo: Filter by Type",
     items = items,
     format_item = format_item,
     get_ordinal = function(item) return item.ordinal end,
@@ -245,7 +245,7 @@ function M.filter_tags(opts)
   local items = build_items(tags, entry_maker)
 
   picker.open({
-    title = "Holon: Filter by Tag",
+    title = "Halo: Filter by Tag",
     items = items,
     format_item = format_item,
     get_ordinal = function(item) return item.ordinal end,
@@ -265,7 +265,7 @@ function M.templates(opts)
   local items = build_items(templates, entry_maker)
 
   picker.open({
-    title = "Holon: Select Template",
+    title = "Halo: Select Template",
     items = items,
     format_item = format_item,
     get_ordinal = function(item) return item.ordinal end,
@@ -305,12 +305,12 @@ function M.insert_link_picker(opts)
   local items = build_items(raw, entry_maker)
 
   picker.open({
-    title = "Holon: Insert Link",
+    title = "Halo: Insert Link",
     items = items,
     format_item = format_item,
     get_ordinal = function(item) return item.ordinal end,
     on_select = function(item)
-      actions.insert_link(item.uuid, item.title)
+      actions.insert_link(item.value, item.title)
     end,
     preview = file_preview,
     helpline = " CR:insert link  q:close",
@@ -327,13 +327,12 @@ function M.backlinks(opts)
 
   if not identifier then
     local current_file = vim.fn.expand("%:p")
-    identifier = utils.extract_uuid_from_path(current_file)
-      or vim.fn.fnamemodify(current_file, ":t:r")
+    identifier = current_file
     local fm = require("holon.frontmatter").parse_file(current_file)
     title = require("holon.frontmatter").get_title(fm) or identifier
   end
 
-  local prompt_title = "Holon: Backlinks"
+  local prompt_title = "Halo: Backlinks"
   if title then
     prompt_title = prompt_title .. " to " .. utils.truncate(title, 30)
   end
@@ -388,7 +387,7 @@ function M.forward_links(opts)
       or vim.fn.fnamemodify(filepath, ":t:r")
   end
 
-  local prompt_title = "Holon: Links from " .. utils.truncate(title, 30)
+  local prompt_title = "Halo: Links from " .. utils.truncate(title, 30)
 
   local raw = finders.find_forward_links(filepath, opts)
   local entry_maker = make_entry.make_note_entry(opts)
@@ -444,13 +443,13 @@ function M.indexes(opts)
     if sel then
       picker.close()
       vim.schedule(function()
-        actions.insert_link(sel.uuid, sel.title)
+        actions.insert_link(sel.value, sel.title)
       end)
     end
   end
 
   picker.open({
-    title = "Holon: Index Notes",
+    title = "Halo: Index Notes",
     items = items,
     format_item = format_item,
     get_ordinal = function(item) return item.ordinal end,
@@ -487,13 +486,13 @@ function M.index_links(opts)
     if sel and sel.exists then
       picker.close()
       vim.schedule(function()
-        actions.insert_link(sel.uuid, sel.display_text_raw)
+        actions.insert_link(sel.value, sel.display_text_raw)
       end)
     end
   end
 
   picker.open({
-    title = "Holon: Links from " .. utils.truncate(title, 30),
+    title = "Halo: Links from " .. utils.truncate(title, 30),
     items = items,
     format_item = format_item,
     get_ordinal = function(item) return item.ordinal end,
@@ -528,7 +527,7 @@ function M.journal(opts)
   local items = build_items(raw, entry_maker)
 
   picker.open({
-    title = "Holon: Journal",
+    title = "Halo: Journal",
     items = items,
     format_item = format_item,
     get_ordinal = function(item) return item.ordinal end,
@@ -560,7 +559,7 @@ function M.orphans(opts)
   local items = build_items(raw, entry_maker)
 
   picker.open({
-    title = "Holon: Orphan Notes",
+    title = "Halo: Orphan Notes",
     items = items,
     format_item = format_item,
     get_ordinal = function(item) return item.ordinal end,
